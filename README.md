@@ -56,10 +56,10 @@ Let's start over.
 GUS is a container of pretty much everything: scripts that download the maps (`GUS.download_data`, `GUS.download_data_errors`), classes that read galaxies physical properties (`GUS.GalaxyProperties`), to read the map (`GUS.FitsUtils`) and to convert the physical scales into angular and viceversa (`GUS.AngularPhysicalConv`), scripts to avoing ambiguity in observing band names (`GUS.band_disambiguation`) and to associate a colormap to each band (`GUS.associate_colormap`), and so on.
 
 ### DataRed
-DataRed è lo script dei processi di riduzione dati e band degradation (e per verificare cosa è uscito fuori).
-Per ridurli, si chiama così: `DataRed.data_reduction(galaxy_name, path_fits_input = 'Caapr/Maps')`. Il path di input dipende dal se si voglia o meno far girare CAAPR per eseguire la sottrazione delle stelle, come riportato sopra. Siccome non lo faccio girare mai, in automatico ho messo il path in cui vengono scaricate le mappe. Questo script genera una cartella *_ReducedMaps* nel quale vengono salvate le mappe ridotte.
+DataRed is the script containing all the data reduction processes (and to verify everything).
+To reduce them, the syntax is `DataRed.data_reduction(galaxy_name, path_fits_input = 'Caapr/Maps')`. The input path depends on wheter the user wants CAAPR to run with star subtraction. I never run CAAPR with star subtraction, so I automatically inserted the path of the folder where the maps are downloaded. This generates a folder *_ReducedMaps* where the reduced maps are stored.
 
-Il check viene fatto con `DataRed.check_Dustpedia(galaxy_name, working_bands)`, e banalmente prende il flusso delle mappe ridotte entro l'apertura usata dalla collaborazione di Dustpedia, e lo confronta con il flusso riportato da loro (tutte info che stanno dentro la cartella *DustPedia_Tables*)
+The check is performed with `DataRed.check_Dustpedia(galaxy_name, working_bands)`, and trivially measures the fluxes of the reduced maps within the same aperture used by the Dustpedia collaboration, and confronts it with their reported fluxes (all information that are within the folder *DustPedia_Tables*)
 
 Nel caso in cui una mappa ridotta non vada bene (flussi totalmente scazzati), o si senta il bisogno di far rigirare il processo di riduzione, l'utente non deve spaventarsi, lo script salta in automatico le bande per cui trova la mappa ridotta dentro la cartella. Nel caso, quindi, bisognerà solo cancellare la mappa che non va bene, e far rigirare la cella.
 
