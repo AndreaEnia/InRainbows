@@ -61,10 +61,10 @@ To reduce them, the syntax is `DataRed.data_reduction(galaxy_name, path_fits_inp
 
 The check is performed with `DataRed.check_Dustpedia(galaxy_name, working_bands)`, and trivially measures the fluxes of the reduced maps within the same aperture used by the Dustpedia collaboration, and confronts it with their reported fluxes (all information that are within the folder *DustPedia_Tables*)
 
-Nel caso in cui una mappa ridotta non vada bene (flussi totalmente scazzati), o si senta il bisogno di far rigirare il processo di riduzione, l'utente non deve spaventarsi, lo script salta in automatico le bande per cui trova la mappa ridotta dentro la cartella. Nel caso, quindi, bisognerà solo cancellare la mappa che non va bene, e far rigirare la cella.
+If a map reduction goes awry (i.e. fluxes completely different from the Dustpedia ones), or one feels the need to re-run the whole reductino process, the uses should not get frightened, as the script automatically skips the bands for which the reduced map is inside the folder. Therefore if that's the case, the user should just delete the bad map, and re-run the cell.
 
 ### PhotoScripts
-PhotoScripts sono tutti quegli script per stimare la rms sulle varie mappe, generare la griglia di coordinate e farci fotometria sopra, quindi costruire le tabelle fotometriche di interesse, tra cui quella da dare in pasto a MAGPHYS.
+PhotoScripts are those scripts to measure the maps rms, generate the grid of coordinates and perform photometry on those apertures, then build the photometric tables, including the one to give to MAGPHYS as input.
 
 Per quanto riguarda la **rms**, dentro lo stesso script `PhotoScripts.evaluate_rms(galaxy_properties)` ci sono due versioni, v1 e v2. Entrambe le versioni condividono il grosso dello script, solo la parte finale cambia. Per grosso intendo: il mascheramento della galassia, in base a quando presente nelle tabelle di DustPedia, il sigma clipping della rimanente mappa, e la generazione di 2500 aperture random di 10 arcsec di raggio (di default, ma si possono fornire valori, basta mettere tra gli aromenti N_ap = xxx e ap_radius_physical = xxx). A questo punto i metodi divergono: v2 è quella che ho usato per i nostri paper, v1 è quella che uso adesso che sto a Bologna:
 - v1 invece prende la distribuzione del flusso di tutte le 2500 aperture, e misura la rms come deviazione standard di questa distribuzione
