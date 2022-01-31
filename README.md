@@ -1,4 +1,6 @@
 # In Rainbows: Spatially-resolved SED fitting of local galaxies in Dustpedia
+Upon which the results in [Enia et al., 2020](https://ui.adsabs.harvard.edu/abs/2020MNRAS.493.4107E/abstract), [Morselli et al., 2020](https://ui.adsabs.harvard.edu/abs/2020MNRAS.496.4606M/abstract), and [2021](https://ui.adsabs.harvard.edu/abs/2021MNRAS.502L..85M/abstract) are based.
+
 
 ## Introduction
 
@@ -30,28 +32,28 @@ The notebook is a series of simple istructions, as it creates step by step the n
 * plot_radius = # How big the grid check plot should be. I suggest slightly bigger than the former grid_extention
 ```
 
-5) Now it is the time for the big cell with all the photometric steps: the grid is generated, checked (eventually) A questo punto c'è il megacellone con gli step fotometrici: si genera la griglia, la si controlla (eventualmente), si fa la fotometria su quella griglia di aperture, si costruisce la tabella che andrà dentro magphys per il SED fitting. Quest'ultima non viene costruita su tutte le aperture, MA su quelle che superano una treshold di punti fotometrici positivi (di default 10), considerato che se il SNR va sotto un'altra threshold (di default 1.5), quel punto è escluso dalla fotometria.
+5) Now it's the time for the big cell with all the photometric steps: the grid is generated, checked (eventually), the code performs photometry on that particular grid, builds the table that enters MAGPHYS as the input for SED fitting. This table is not built on all the apertures, but only on the ones over a certain treshold of positive photometric points (10 by default), given that if SNR goes below another treshold (1.5 by default), that point is excluded from photometry.
 
-**Step di SED fitting e risultati.**
+**SED fitting step and results.**
 
-6) A questo punto c'è solo da copiare la tabella dentro la cartella di magphys, farlo girare, aspettare che finisca, ricopiare i risultati dentro la cartella 'magphys'+_run_type e leggerli, salvando i risultati in un comodo magphys_results.csv
+6) The table is copied within magphys folder, a bash script runs magphys, the user waits until it is onver, and then copies the results (.sed, .fit) inside the folder 'magphys'+_run_type. These are automatically read, saving the results in a comfy magphys_results.csv
 
-7) Uno step aggiuntivo opzionale, vista l'eventuale presenza di punti sparsi sconnessi dal resto delle aperture per via della treshold che riportavo prima. Questo step è il clustering removal, una roba ipermega tecnologica che cerca di salvare solo i punti che appartengono al grappolo principale di aperture, scartando quelli troppo isolati dal resto.
+7) One optional step, given the presence of sparse points disconnected from the other apertures given the tresholds reported earlier. This is a clustering removal step with DBScan, which tries to identify the main cluster of points belonging to the bigger group of apertures, discarding the isolated ones.
 
-8) Infine, plotta i risultati. Questi plot sono molto brutti e preliminari, giusto per vedere cosa usciva fuori.
+8) Finally, plots the results. These quick'n'dirty plots are quite ugly and preliminar, just to see what gets out.
 
-Descrizione pedante dei singoli scripts.
+Pedantic description of all the scripts.
 -----------
-Tutto il lavoro descritto sopra viene eseguito in diversi scripts, tutti ospitati dentro la cartella scripts/ (duh!), i cui titoli sono abbastanza self-explanatory:
+All the described work is exectued by various scripts, contained in the folder scripts/ (duh!), with pretty self-explanatory titles:
 * `GenericUsefulScripts` (GUS)
 * `DataReduction` (DataRed)
 * `PhotometryScripts` (PhotoScripts)
 * `SedFittingScripts` (SEDfit)
 * `ResultsScripts` (ResScripts)
 
-Iniziamo.
+Let's start over.
 ### GUS
-GUS è un contenitore di un po' di tutto: gli script che scaricano le mappe (`GUS.download_data`, `GUS.download_data_errors`), le classi per leggere le proprietà fisiche delle galassie (`GUS.GalaxyProperties`), per leggere le mappe (`GUS.FitsUtils`) e per convertire le scale fisiche in quelle angolari e viceversa (`GUS.AngularPhysicalConv`), script per evitare ambiguità di nome per le bande osservative (`GUS.band_disambiguation`) e appioppare una colomap alle bande (`GUS.associate_colormap`), robe così va.
+GUS is a container of pretty much everything: scripts that download the maps (`GUS.download_data`, `GUS.download_data_errors`), classes that read galaxies physical properties (`GUS.GalaxyProperties`), to read the map (`GUS.FitsUtils`) and to convert the physical scales into angular and viceversa (`GUS.AngularPhysicalConv`), scripts to avoing ambiguity in observing band names (`GUS.band_disambiguation`) and to associate a colormap to each band (`GUS.associate_colormap`), and so on.
 
 ### DataRed
 DataRed è lo script dei processi di riduzione dati e band degradation (e per verificare cosa è uscito fuori).
