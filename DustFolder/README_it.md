@@ -1,5 +1,4 @@
 In Rainbows: Spatially-resolved SED fitting of local galaxies in Dustpedia
-=======
 
 Introduzione
 -----------
