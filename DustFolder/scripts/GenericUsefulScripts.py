@@ -333,9 +333,9 @@ def run_CAAPR(galaxy_name):
     os.chdir(actual_path)
     return 'Done!'
     
-#   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#    QUI STO COPIANDO DA CHRIS CLARK
-#   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#   !!!!!!!!!!!!!!!!!!!!!!!!!
+#     CHRIS CLARK SCRIPTS
+#   !!!!!!!!!!!!!!!!!!!!!!!!!
 
 def Downsample(myarr, factor, estimator=np.nanmean):
     '''
