@@ -442,7 +442,8 @@ def do_photometry_build_table(galaxy_properties, working_bands, cell_side, run_t
     import matplotlib.pyplot as plt
     plt.close('all') # Clear all the previously opened graphic windows
     from matplotlib import cm, gridspec
-  
+    import DataReduction as DataRed
+
     # =================
     # GALAXY PROPERTIES
     galaxy_name = galaxy_properties.galaxy_name
@@ -489,7 +490,7 @@ def do_photometry_build_table(galaxy_properties, working_bands, cell_side, run_t
     #   - galactic extinction correction
     GalCorr_path = '../'+galaxy_name+'/galactic_extinction_correction.txt'
     if os.path.exists(GalCorr_path): pass
-    else: GalExtCorr(galaxy_name, working_bands, ra, dec)
+    else: DataRed.GalExtCorr(galaxy_name, working_bands, galaxy_properties.ra, galaxy_properties.dec)
     GalExtCorr_Dict = dict(zip(ascii.read(GalCorr_path)['Band'].data, \
                       ascii.read(GalCorr_path)['Correction'].data))
     #   - rms table. rms is per pixel. Pixels in the aperture vary between bands, so multiply accordingly.
