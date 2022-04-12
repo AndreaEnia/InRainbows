@@ -575,7 +575,177 @@ def plot_results(GalProp, run_type, aperture_side, fits_base_band, plot_size, s_
     
     return
 
-def plot_seds(GalProp, run_type, aperture_side, fits_base_band, plot_size):
+def plot_seds(GalProp, run_type, aperture_side, fits_base_band, plot_size, \
+              vmin = 0.5, vmax = 2.0, ymin = 1E-7, ymax = 1E2, tile_color = 'w', fill_tile = False, \
+              map_title = False, overwrite = False, make_m4a = True, sort_by_cendist = True):
+    
+    from astropy.cosmology import Planck15 as cosmo
+    from astropy.constants import L_sun
+    import matplotlib.pyplot as plt
+    from matplotlib import cm, gridspec
+    from astropy.visualization import (MinMaxInterval, LogStretch, ImageNormalize)
+    from matplotlib.ticker import (MultipleLocator, FormatStrFormatter, AutoMinorLocator, LogLocator)
+    
+    # =================
+    # GALAXY PROPERTIES
+    galaxy_name = GalProp.galaxy_name
+    D_L = GalProp.dist
+    z_source = GalProp.z_source
+    DL = cosmo.luminosity_distance(z_source).to('m') # Sta roba è da risolvere.
+    arcsec_per_kpc = cosmo.arcsec_per_kpc_comoving(z_source)
+    ra_cen, dec_cen = GalProp.ra, GalProp.dec
+    cen_pos = SkyCoord(ra_cen, dec_cen, frame = 'icrs')
+    # =================
+
+    # =================
+    magphys_results_folder = '../'+galaxy_name+'/magphys_'+run_type+'/run_'+run_type
+    # =================
+
+    # =====================
+    # Paths for .sed and .fit
+    sed_path = sorted([magphys_results_folder+'/final_results/'+file \
+                   for file in os.listdir(magphys_results_folder+'/final_results/') if file.endswith('.sed')])
+    fit_path = sorted([magphys_results_folder+'/final_results/'+file \
+                   for file in os.listdir(magphys_results_folder+'/final_results/') if file.endswith('.fit')])
+    # =====================
+    
+    # ==============
+    # Read some physical properties
+    table = pd.read_csv(magphys_results_folder+'/'+galaxy_name+'_results_'+run_type+'.dat', \
+                        sep = ',', dtype={'Id. Aperture': object})
+    id_ap = table['Id. Aperture'].values
+    ra_apertures = table['ra_apertures'].values*u.deg
+    dec_apertures = table['dec_apertures'].values*u.deg
+    cendist_physical = table['cendist_physical'].values
+    bestfit_chisq = table['Bestfit_Chisq'].values
+    
+    if aperture_side.unit == 'pc': aperture_side = aperture_side.to('kpc')
+    if aperture_side.unit == 'arcmin': aperture_side = aperture_side.to('arcsec')
+    if aperture_side.unit == 'kpc': aperture_side *= arcsec_per_kpc
+    else: pass
+    coords = SkyCoord(ra_apertures, dec_apertures, frame = 'icrs')
+    list_apertures = []
+    for i_ap in trange(len(ra_apertures), ascii = True, desc = 'Reading apertures'):
+        aperture = SkyRectangularAperture(coords[i_ap], w=aperture_side, h=aperture_side, theta = 0*u.deg)
+        list_apertures.append(aperture)
+    # ==============
+
+    # ==============
+    # Now start with the plot
+    fits_base = GUS.FitsUtils('../'+galaxy_name+'/_ReducedMaps/'+fits_base_band+'.fits') 
+    pixel_scale = (fits_base.get_pixel_scale()*u.deg).to('arcsec')
+    cen_pos = SkyCoord(GalProp.ra, GalProp.dec, frame = 'icrs')
+    cen_xpix, cen_ypix = skycoord_to_pixel(cen_pos, fits_base.wcs)
+    try: unit = plot_size.unit
+    except: raise Exception('You must give a unit to plot size.')
+    if unit == 'pc': plot_size = plot_size.to('kpc')
+    if unit == 'arcmin': plot_size = plot_size.to('arcsec')    
+    if unit == 'arcsec':
+        plot_size_in_kpc = 2*plot_size/arcsec_per_kpc
+        print('Plot side will be of {0:.2f}'.format(plot_size_in_kpc))
+    if unit == 'kpc':
+        plot_size *= arcsec_per_kpc
+        print('At z = {0:.6f} plot side will be of {1:.1f}'.format(GalProp.z_source, 2*plot_size))
+    plot_size_pixel = (plot_size/pixel_scale).value
+    x_min, x_max = cen_xpix-plot_size_pixel, cen_xpix+plot_size_pixel
+    y_min, y_max = cen_ypix-plot_size_pixel, cen_ypix+plot_size_pixel
+    # ==============
+
+    # ==============
+    subprocess.call('mkdir '+magphys_results_folder+'/seds', shell = True)
+    for fit, sed, aperture, chi_sq in tqdm(zip(fit_path, sed_path, list_apertures, bestfit_chisq)):
+        
+        plt.close('all') # Mandatory for survival
+        i_file = int(sed[-8:-4])
+        
+        if overwrite: pass
+        else:
+            if os.path.exists(magphys_results_folder+'/seds/{0:04}_sed.png'.format(i_file)): continue
+    
+        SED = plt.figure(figsize=(15,5))
+    
+        gs = gridspec.GridSpec(1, 2, width_ratios=[1.8, 1]) 
+        ax1 = plt.subplot(gs[0]) # SED with observed datapoints + magphys fit
+        ax2 = plt.subplot(gs[1], projection = fits_base.wcs) # Galaxy with selected aperture
+    
+        temp_res = magphys_read.MagphysOutput(fit, sed)
+        filters = temp_res.obs_filters
+        lam_observed = [Wvlghts_dictionary[i] for i in filters]*u.micrometer
+    
+        SED_observed = 1E26*(temp_res.obs_flux.value*L_sun)/(4*np.pi*DL**2)             # From LSOL HZ^-1 To Jansky
+        SED_observed_errors = 1E26*(temp_res.obs_flux_err.value*L_sun)/(4*np.pi*DL**2)  # From LSOL HZ^-1 To Jansky
+        SED_predicted = 1E26*(temp_res.obs_predict.value*L_sun)/(4*np.pi*DL**2)         # From LSOL HZ^-1 To Jansky
+        SED_snr= SED_observed/SED_observed_errors
+        
+        lambda_model = (temp_res.sed_model_logwaves).to('Angstrom')
+        y = 10**temp_res.sed_model[:,1]*(lambda_model**2/v_lux.to('Angstrom/s'))
+        fsed = (y*(1+z_source)/(4*np.pi*DL**2))*1E26 # Ricordati di cambiare a 1E23 quando arriva blabla
+        fsed = fsed*L_sun
+        
+        cond_colors = ['tab:red' if t < 2 else \
+                      ('orange' if t > 2 and t < 3 else \
+                      ('gold' if t > 3 and t < 5 else \
+                      ('lightgreen' if t > 5 and t < 8 else \
+                      ('tab:green' if t > 8 and t < 10 else 'darkgreen')))) for t in SED_snr]
+                  
+        ax1.plot(lambda_model.to('micrometer'), fsed, color = 'k', linewidth = 3.0, zorder = 0)
+        ax1.scatter(lam_observed, SED_observed, s = 80, color = cond_colors, linestyle = 'None', marker = 'o', zorder = 1)
+        
+        SEDpoint_labels = ['SNR < 2', '2 < SNR < 3', '3 < SNR < 5', '5 < SNR < 8', '8 < SNR < 10', 'SNR > 10']
+        SEDpoint_colors = ['tab:red', 'orange', 'gold', 'lightgreen', 'tab:green', 'darkgreen']
+        [ax1.plot(0, 0, color = c, linewidth = 0, ms = 10, marker = 'o', label = l) for c, l in zip(SEDpoint_colors, SEDpoint_labels)]
+        ax1.legend(loc = 'upper left', frameon=False)
+    
+        cond_color = 'tab:red' if chi_sq > 25 else ('gold' if chi_sq > 15 and chi_sq < 25 else 'tab:green')
+        ax1.text(1E2, 2E1, r'$\chi^2$  = '+str(np.round(chi_sq, 1)), color = cond_color, fontsize = 15)
+        ax1.set_xscale('log'), ax1.set_yscale('log')
+        ax1.set_xlabel(r'$\log_{10} (\lambda/\mu{\rm m})$', size = 15), ax1.set_ylabel(r'$\log_{10} (f_{\lambda}\,/\,{\rm Jy})$', size = 15)
+        ax1.tick_params(axis='both', which='major', direction = 'in', labelsize=15)
+        ax1.tick_params(axis='both', which='minor', direction = 'in', labelsize=8)
+        ax1.yaxis.set_minor_locator(LogLocator(base=10))
+    
+        #ymin, ymax = 10**(np.log10(SED_observed.min().value)-0.5), 10**(np.log10(SED_observed.max().value)+0.5)
+        ax1.set_xlim(1E-1, 7E2), ax1.set_ylim(ymin, ymax)
+    
+        # Create an ImageNormalize object
+        norm = ImageNormalize(fits_base.signal, interval=MinMaxInterval(), stretch=LogStretch(), vmin = vmin, vmax = vmax)
+        ax2.imshow(fits_base.signal, origin = 'lower', interpolation = 'nearest', cmap = GUS.associate_colormap(fits_base.bandname), norm = norm)
+        if map_title: ax2.set_title(fits_base_band)
+    
+        ra_x, dec_y = aperture.positions.to_pixel(fits_base.wcs)[0], aperture.positions.to_pixel(fits_base.wcs)[1]
+        term = (.5*aperture_side/pixel_scale).value
+        rectangle = plt.Rectangle((ra_x-term, dec_y+term),
+                                  width = aperture_side/pixel_scale, height = aperture_side/pixel_scale,
+                                  color = tile_color, linewidth = 3.0, fill = fill_tile)
+        ax2.add_artist(rectangle)
+    
+        ax2.set_xlim(x_min, x_max), ax2.set_ylim(y_min, y_max)
+        ax2.coords[1].set_axislabel_position('r'), ax2.coords[1].set_ticks_position('r'), ax2.coords[1].set_ticklabel_position('r')
+        ax2.coords[0].set_axislabel('RA [deg]', size = 15), ax2.coords[1].set_axislabel('DEC [deg]', size = 15)
+        ax2.coords[0].set_ticklabel(size=10), ax2.coords[1].set_ticklabel(size=10)
+        
+        plt.tight_layout()
+        SED.savefig(magphys_results_folder+'/seds/{0:04}_sed.png'.format(i_file), bbox_inches = 'tight')
+        
+    if make_m4a:
+        import imageio
+        import moviepy.editor as mp
+        # Generate .gif
+        path = magphys_results_folder+'/seds/'
+        fullpath = [path+filename for filename in sorted(os.listdir(path)) if not filename.startswith('.')]
+        if sort_by_cendist:
+            print('.gif and .mp4 will be sorted by distance from the center.')
+            fullpath = [x for _, x in sorted(zip(cendist_physical, fullpath), key=lambda pair: pair[0])]
+        else: print('.gif and .mp4 will be sorted by aperture number (top-left to bottom-right).')
+        images = [imageio.imread(t) for t in fullpath]
+        imageio.mimsave(magphys_results_folder+'/seds.gif', images, duration = 0.1)
+        # Generate .mp4
+        clip = mp.VideoFileClip(magphys_results_folder+'/seds.gif')
+        clip.write_videofile(magphys_results_folder+'/seds.mp4')
+        
+    return
+
+def plot_seds_old(GalProp, run_type, aperture_side, fits_base_band, plot_size):
     from astropy.constants import L_sun
     import matplotlib.pyplot as plt
     from matplotlib import cm, gridspec
