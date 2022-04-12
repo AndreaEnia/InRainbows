@@ -15,19 +15,21 @@ To run a galaxy (i.e. NGCxxxx), there are three simple steps to follow:
 - cut'n'paste inside the folder the notebook "GalaxyFlow.ipynb" found in scripts/
 - follow the instructions inside the notebook
 
-The notebook is a series of simple istructions, as it creates step by step the necessary folders with the reduced maps, results and plots. Check under for an exhaustive expalanation of what each function does, and how to customize them, in the meantime a general overview.
+The notebook is a series of simple one-liner functions, as it creates the necessary folders step by step, containing the reduced maps, results and plots. Check under for an exhaustive expalanation of what each function does, and how to customize them.
+
+Now, a general overview.
 
 **Preliminary steps.**
 
-1) Download from the DustPedia website bands and associated errors (if available) the user wants to work with. I suggest to pre-check in the site the bands and errors availability.
+1) Download from the DustPedia website bands and associated errors (if available) the user wants to work with. I suggest to pre-check in the site what bands and error maps are available.
 
-2) Data reduction, and for data reduction I mean: sky subtraction (if present), degradation to the worst map resolution, which as of today is assumed to always be SPIRE350. Yes, this thing could easily be generalized, but I don't tengo cazzi. This step is time consuming, so the reduced maps are saved in a folder, as in this way there is no need to always redo the whole procedure.
+2) Data reduction, and for data reduction I mean: sky subtraction (if present), degradation to the worst map resolution, which as of today is assumed to always be SPIRE350. Yes, this thing could easily be generalized, but I don't tengo cazzi. This step is time consuming (and parallelized), so the reduced maps are saved in a folder, as in this way there is no need to always redo the whole procedure.
 
-3)  Measure the maps rms (per pixel).
+3) Measure the maps rms (per pixel).
 
 **Photometric steps.**
 
-4) The user, depending on what results it desires, has to simply fill there four variables:
+4) The user, depending on what it desires, simply has to fill these fields:
 ```python
 * run_type = # The run name, i.e. pBp for pixel-by-pixel, or 1kpc for 1kpc apertures, o "Bh<oalf3-2Hhlad" if it feels creative.
 * aperture_side = # How big the SIDE of the (square) apertures should be, either in parsec, kiloparsec or arcsec.
@@ -37,7 +39,7 @@ The notebook is a series of simple istructions, as it creates step by step the n
 * plot_radius = # How big the grid check plot should be. I suggest slightly bigger than the former grid_extention
 ```
 
-5) Now it's the time for the big cell with all the photometric steps: the grid is generated, checked (eventually), the code performs photometry on that particular grid, builds the table that enters MAGPHYS as the input for SED fitting. This table is not built on all the apertures, but only on the ones over a certain threshold of positive photometric points (10 by default), given that if SNR goes below another threshold (1.5 by default), that point is excluded from photometry.
+5) Now it's the time for the big cell with all the photometric steps: the grid is generated, checked (eventually), the code performs photometry on that particular grid, builds the table that enters MAGPHYS as the input for SED fitting. This table is not built on all the apertures, but only on the ones over a certain threshold of positive photometric points (10 by default), given that if SNR goes below another threshold (2 by default), that point is excluded from photometry.
 
 **SED fitting step and results.**
 
@@ -45,7 +47,7 @@ The notebook is a series of simple istructions, as it creates step by step the n
 
 7) One optional step, given the presence of sparse points disconnected from the other apertures given the thresholds reported earlier. This is a clustering removal step with DBScan, which tries to identify the main cluster of points belonging to the bigger group of apertures, discarding the isolated ones.
 
-8) Finally, plots the results. These quick'n'dirty plots are quite ugly and preliminar, just to see what gets out.
+8) Finally, plots the results. These quick'n'dirty plots are quite ugly and preliminar, just to see what gets out. If the user wants to, the code generates the SED for each cell, and a cute gif/movie of all the cells (see above)
 
 Pedantic description of all the scripts.
 -----------
