@@ -1,6 +1,8 @@
 # In Rainbows: Spatially-resolved SED fitting of local galaxies in Dustpedia
 
-https://user-images.githubusercontent.com/36571504/162932115-5461a8e9-19d8-4ed9-b4fc-720a92793fe3.mp4
+https://user-images.githubusercontent.com/36571504/162960138-6d622ed2-9717-4795-a711-7d6d6de8357e.mp4
+
+https://user-images.githubusercontent.com/36571504/162960144-7a3bbfd6-bb70-405a-8820-7a2edf04318d.mp4
 
 Upon which the results in [Enia et al., 2020](https://ui.adsabs.harvard.edu/abs/2020MNRAS.493.4107E/abstract), [Morselli et al., 2020](https://ui.adsabs.harvard.edu/abs/2020MNRAS.496.4606M/abstract), and [2021](https://ui.adsabs.harvard.edu/abs/2021MNRAS.502L..85M/abstract) are based.
 
