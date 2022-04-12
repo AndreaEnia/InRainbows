@@ -576,7 +576,7 @@ def plot_results(GalProp, run_type, aperture_side, fits_base_band, plot_size, s_
     return
 
 def plot_seds(GalProp, run_type, aperture_side, fits_base_band, plot_size, \
-              vmin = 0.5, vmax = 2.0, ymin = 1E-7, ymax = 1E2, tile_color = 'w', fill_tile = False, \
+              vmin = False, vmax = False, ymin = 1E-7, ymax = 1E2, tile_color = 'w', fill_tile = False, \
               map_title = False, overwrite = False, make_m4a = True, sort_by_cendist = True):
     
     from astropy.cosmology import Planck15 as cosmo
@@ -708,7 +708,8 @@ def plot_seds(GalProp, run_type, aperture_side, fits_base_band, plot_size, \
         ax1.set_xlim(1E-1, 7E2), ax1.set_ylim(ymin, ymax)
     
         # Create an ImageNormalize object
-        norm = ImageNormalize(fits_base.signal, interval=MinMaxInterval(), stretch=LogStretch(), vmin = vmin, vmax = vmax)
+        if vmin: norm = ImageNormalize(fits_base.signal, interval=MinMaxInterval(), stretch=LogStretch(), vmin = vmin, vmax = vmax)
+        else: norm = ImageNormalize(fits_base.signal, interval=MinMaxInterval(), stretch=LogStretch())
         ax2.imshow(fits_base.signal, origin = 'lower', interpolation = 'nearest', cmap = GUS.associate_colormap(fits_base.bandname), norm = norm)
         if map_title: ax2.set_title(fits_base_band)
     
