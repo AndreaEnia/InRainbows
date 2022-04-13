@@ -285,30 +285,36 @@ def pairwise(iterable):
     a = iter(iterable)
     return izip(a, a)
 
-def download_data(galaxy_name, bands_to_download, download_directory):
-    # Ancora non è parallelizzato.
+def download_data(galaxy_name, bands_to_download, download_directory, processes = 10):
+    from itertools import repeat
+    import multiprocessing
     subprocess.call('mkdir '+download_directory.split('/')[0], shell = True)
     subprocess.call('mkdir '+download_directory.split('/')[0]+'/'+download_directory.split('/')[1], shell = True)
     actual_path = os.getcwd()
     os.chdir(download_directory)
-    for band in bands_to_download:
-        instrument = str(band.split('_', 1)[0])
-        if instrument == 'Spitzer':
-            link_path = ' "http://dustpedia.astro.noa.gr/Data/GetImage?imageName='+galaxy_name+'_'+band+'.fits.gz&instrument='+instrument+'"'
-            command = 'wget -cO -'+link_path+' > '+galaxy_name+'_'+band+'.fits.gz'
-            print('Downloading '+galaxy_name+'_'+band)
-            subprocess.call(command, shell = True)
-            subprocess.call('gunzip '+galaxy_name+'_'+band+'.fits.gz', shell = True)
-        else:
-            link_path = ' "http://dustpedia.astro.noa.gr/Data/GetImage?imageName='+galaxy_name+'_'+band+'.fits&instrument='+instrument+'"'
-            command = 'wget -cO -'+link_path+' > '+galaxy_name+'_'+band+'.fits'
-            print('Downloading '+galaxy_name+'_'+band)
-            subprocess.call(command, shell = True)
+    pool = multiprocessing.Pool()
+    with multiprocessing.Pool(processes=processes) as pool:
+        func = zip(bands_to_download, repeat(galaxy_name))
+        pool.starmap(parallel_download, func)
     os.chdir(actual_path)
-    return 'Done!'
+    return 'All maps have been stored in '+download_directory
+
+def parallel_download(band, galaxy_name):
+    instrument = str(band.split('_', 1)[0])
+    if instrument == 'Spitzer':
+        link_path = ' "http://dustpedia.astro.noa.gr/Data/GetImage?imageName='+galaxy_name+'_'+band+'.fits.gz&instrument='+instrument+'"'
+        command = 'wget -cO -'+link_path+' > '+galaxy_name+'_'+band+'.fits.gz'
+        subprocess.call(command, shell = True)
+        subprocess.call('gunzip '+galaxy_name+'_'+band+'.fits.gz', shell = True)
+    else:
+        link_path = ' "http://dustpedia.astro.noa.gr/Data/GetImage?imageName='+galaxy_name+'_'+band+'.fits&instrument='+instrument+'"'
+        command = 'wget -cO -'+link_path+' > '+galaxy_name+'_'+band+'.fits'
+        subprocess.call(command, shell = True)
+    print('Downloaded '+galaxy_name+'_'+band)
+    return
 
 def download_data_errors(galaxy_name, bands_to_download, download_directory):
-    # Ancora non è parallelizzato.
+    # Sono poche, pesano una sega, non c'è bisogno di ||.
     subprocess.call('mkdir '+download_directory.split('/')[0], shell = True)
     subprocess.call('mkdir '+download_directory.split('/')[0]+'/'+download_directory.split('/')[1], shell = True)
     actual_path = os.getcwd()
@@ -324,7 +330,7 @@ def download_data_errors(galaxy_name, bands_to_download, download_directory):
         print('Downloading '+galaxy_name+'_'+band+' error map.')
         subprocess.call(command, shell = True)
     os.chdir(actual_path)
-    return 'Done!'
+    return 'All error maps have been stored in '+download_directory
     
 def run_CAAPR(galaxy_name):
     actual_path = os.getcwd()
@@ -333,9 +339,9 @@ def run_CAAPR(galaxy_name):
     os.chdir(actual_path)
     return 'Done!'
     
-#   !!!!!!!!!!!!!!!!!!!!!!!!!
-#     CHRIS CLARK SCRIPTS
-#   !!!!!!!!!!!!!!!!!!!!!!!!!
+#   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#    QUI STO COPIANDO DA CHRIS CLARK
+#   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 def Downsample(myarr, factor, estimator=np.nanmean):
     '''
@@ -420,3 +426,27 @@ def Most_Common(lst):
     from collections import Counter
     data = Counter(lst)
     return data.most_common(1)[0][0]
+
+######
+
+def old_download_data(galaxy_name, bands_to_download, download_directory):
+    # Ancora non è parallelizzato.
+    subprocess.call('mkdir '+download_directory.split('/')[0], shell = True)
+    subprocess.call('mkdir '+download_directory.split('/')[0]+'/'+download_directory.split('/')[1], shell = True)
+    actual_path = os.getcwd()
+    os.chdir(download_directory)
+    for band in bands_to_download:
+        instrument = str(band.split('_', 1)[0])
+        if instrument == 'Spitzer':
+            link_path = ' "http://dustpedia.astro.noa.gr/Data/GetImage?imageName='+galaxy_name+'_'+band+'.fits.gz&instrument='+instrument+'"'
+            command = 'wget -cO -'+link_path+' > '+galaxy_name+'_'+band+'.fits.gz'
+            print('Downloading '+galaxy_name+'_'+band)
+            subprocess.call(command, shell = True)
+            subprocess.call('gunzip '+galaxy_name+'_'+band+'.fits.gz', shell = True)
+        else:
+            link_path = ' "http://dustpedia.astro.noa.gr/Data/GetImage?imageName='+galaxy_name+'_'+band+'.fits&instrument='+instrument+'"'
+            command = 'wget -cO -'+link_path+' > '+galaxy_name+'_'+band+'.fits'
+            print('Downloading '+galaxy_name+'_'+band)
+            subprocess.call(command, shell = True)
+    os.chdir(actual_path)
+    return 'Done!'
