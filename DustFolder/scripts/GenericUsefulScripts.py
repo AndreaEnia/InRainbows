@@ -297,7 +297,7 @@ def download_data(galaxy_name, bands_to_download, download_directory, processes 
         func = zip(bands_to_download, repeat(galaxy_name))
         pool.starmap(parallel_download, func)
     os.chdir(actual_path)
-    return 'All maps have been stored in '+download_directory
+    return 'All maps have been stored in ' + download_directory
 
 def parallel_download(band, galaxy_name):
     instrument = str(band.split('_', 1)[0])
